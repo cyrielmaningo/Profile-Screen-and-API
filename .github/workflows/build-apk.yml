@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - latest-mobile-version
+      - test--branch
 
 jobs:
   build-apk:
