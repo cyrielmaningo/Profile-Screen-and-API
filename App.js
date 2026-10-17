@@ -1,21 +1,34 @@
+import 'react-native-gesture-handler';
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import Registration from './pages/Registration';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 
-function App() {
+import { AppProvider } from './src/store/AppContext';
+import RootNavigator from './src/navigation';
+import { colors } from './src/theme/theme';
+
+const navTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.primary,
+    background: colors.background,
+    card: colors.surface,
+    text: colors.ink,
+    border: colors.border,
+  },
+};
+
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/registration" element={<Registration />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
-    </Router>
+    <SafeAreaProvider>
+      <AppProvider>
+        <NavigationContainer theme={navTheme}>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </NavigationContainer>
+      </AppProvider>
+    </SafeAreaProvider>
   );
 }
-
-export default App;

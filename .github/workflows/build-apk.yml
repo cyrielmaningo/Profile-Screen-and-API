@@ -1,0 +1,70 @@
+name: Build Memento Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - latest-mobile-version
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      CI: "1"
+      EXPO_PUBLIC_API_BASE_URL: "http://51.79.166.239:3001"
+      EXPO_PUBLIC_WEB_PLAYER_URL: "http://51.79.166.239:3001/memorial"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --clean
+
+      - name: Allow current HTTP API endpoint
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text(encoding='utf-8')
+          if 'android:usesCleartextTraffic=' not in text:
+              text = text.replace(
+                  '<application ',
+                  '<application android:usesCleartextTraffic="true" ',
+                  1,
+              )
+              manifest.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk Memento.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Memento-Android-APK
+          path: Memento.apk
+          if-no-files-found: error
+          retention-days: 30
